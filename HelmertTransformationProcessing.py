@@ -2,6 +2,12 @@
 
 """
 ***************************************************************************
+    HelmertTransformationProcessing.py
+    ----------------------------------
+    Date                 : January 2022
+    Copyright            : (C) 2022 by Adrian Weber
+    Email                : aweber at qgis dot ch
+***************************************************************************
 *                                                                         *
 *   This program is free software; you can redistribute it and/or modify  *
 *   it under the terms of the GNU General Public License as published by  *
@@ -10,6 +16,11 @@
 *                                                                         *
 ***************************************************************************
 """
+
+__author__ = 'Adrian Weber'
+__date__ = 'January 2022'
+__copyright__ = '(C) 2022, Adrian Weber'
+
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
