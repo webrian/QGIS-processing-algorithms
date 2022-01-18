@@ -21,7 +21,6 @@ __author__ = 'Adrian Weber'
 __date__ = 'January 2022'
 __copyright__ = '(C) 2022, Adrian Weber'
 
-
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
@@ -29,15 +28,16 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFeatureSink,
+                       QgsProcessingParameterFileDestination,
                        QgsWkbTypes)
 from qgis import processing
 import numpy as np
 
-
 class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
     """
     This algorithm georeferences vector using a 4-parameter helmert
-    transformation. At least four control points are required.
+    transformation. At least four control points are required. The parameters
+    are estimated using the least square method.
     
     The reference layer is a (Multi-)LineString layer that connects the control
     points from the start system with the control points in the destination
@@ -57,6 +57,7 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
     REF_INPUT = 'REF_INPUT'
     INPUT = 'INPUT'
     OUTPUT = 'OUTPUT'
+    OUTPUT_HTML_FILE = 'OUTPUT_HTML_FILE'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
@@ -104,7 +105,7 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         should provide a basic description about what the algorithm does and the
         parameters and outputs associated with it..
         """
-        msg = self.tr("""    This algorithm georeferences vector using a 4-parameter helmert transformation. At least four control points are required.
+        msg = self.tr("""    This algorithm georeferences vector using a 4-parameter helmert transformation. At least four control points are required. The parameters are estimated using the least square method.
         The reference layer is a (Multi-)LineString layer that connects the control points from the start system with the control points in the destination system. The line direction is always from the start system to the destination system.
         The layer to transform can be of any geometry type.
         The residuals are reported in the log to review the control points used. Large absolute values of residuals indicate gross errors or show that this transformation does not fit the distortions in the start system.""")
@@ -141,6 +142,16 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
                 self.tr('Transformed layer')
+            )
+        )
+        
+        self.addParameter(
+            QgsProcessingParameterFileDestination(
+                self.OUTPUT_HTML_FILE,
+                self.tr('Transformation report'),
+                self.tr('HTML files (*.html)'),
+                None,
+                True
             )
         )
         
@@ -229,6 +240,10 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         Y_strich = dest[:,1:2] - Ys
         msg = str(X_strich) + ", " + str(Y_strich)
         
+        # Get the translation in X and Y direction
+        dX = Xs - xs
+        dY = Ys - ys
+        
         if feedback.isCanceled():
             return {}
         feedback.setProgressText("Calculate the least squares")
@@ -237,8 +252,8 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         D = np.sum(x_strich * x_strich) + np.sum(y_strich * y_strich)
 
         # Calculate the auxiliary variable a and b
-        a = np.divide((np.sum(x_strich * X_strich) + np.sum(y_strich * Y_strich)), D)
-        b = np.divide((np.sum(x_strich * Y_strich) - np.sum(y_strich * X_strich)), D)
+        a = (np.sum(x_strich * X_strich) + np.sum(y_strich * Y_strich)) / D
+        b = (np.sum(x_strich * Y_strich) - np.sum(y_strich * X_strich)) / D
         
         if feedback.isCanceled():
             return {}
@@ -247,7 +262,11 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         # Calculate the residuals
         XT = Xs + a * x_strich - b * y_strich
         YT = Ys + b * x_strich + a * y_strich
-        msg = "Residuals:\n " + str(YT - dest[:,1:2])
+        Xr = XT - dest[:,:1]
+        Yr = YT - dest[:,1:2]
+        msg = "Residuals X:\n " + "%.5f" % Xr
+        feedback.pushInfo(msg)
+        msg = "Residuals Y:\n " + "%.5f" % Yr
         feedback.pushInfo(msg)
 
         # Calculate the scale
@@ -295,6 +314,8 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
         feedback.setProgressText("Translate the layer to the destination centroid")
+        
+        results = {}
 
         # Translate the layer to the centroid of the destination system
         trans_result = processing.run("native:translategeometry", {
@@ -306,9 +327,54 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
             is_child_algorithm=True,
             context=context,
             feedback=feedback)
+            
+        results[self.OUTPUT] = trans_result['OUTPUT']
 
         if feedback.isCanceled():
             return {}
 
+        output_file = self.parameterAsFileOutput(parameters,
+                                                 self.OUTPUT_HTML_FILE,
+                                                 context)
+
+        def createHtmlReport(out_file):
+            with open(out_file, 'w') as f:
+                f.write('<html><head>')
+                f.write('<meta http-equiv="Content-Type" content="text/html; \
+                         charset=utf-8" /></head><body>')
+                f.write('<h1>' + self.tr('Transformation report') + '</h1>')
+                # Write table with translations
+                f.write('<h2>' + self.tr('Translation') + '</h2>')
+                f.write('<table border="1" width="700px">')
+                f.write('<tr><th>dX</th><th>dY</th></tr>')
+                f.write('<tr><td>' + "%.4f" % dX + '</td><td>' + "%.4f" % dY + '</td></tr>')
+                f.write('</table>')
+                # Write table with scale and rotation
+                f.write('<h2>' + self.tr('Scale and rotation') + '</h2>')
+                f.write('<table border="1" width="700px">')
+                f.write('<tr><th>Scale</th><th>Rotation (in degrees)</th></tr>')
+                f.write('<tr><td>' + "%.6f" % m + '</td><td>' + "%.6f" % phi_grad + '</td></tr>')
+                f.write('</table>')
+                # Write table with control points and residuals
+                f.write('<h2>' + self.tr('Residuals') + '</h2>')
+                f.write('<table border="1" width="700px">')
+                f.write('<tr><th>Start X</td><th>Start Y</th><th>Dest X</th><th>Dest Y</th><th>Residuals X</th><th>Residuals Y</th></tr>')
+                for i in range(R.size):
+                    f.write('<tr>')
+                    f.write('<td>' + "%.4f" % source[i][0] + '</td>')
+                    f.write('<td>' + "%.4f" % source[i][1] + '</td>')
+                    f.write('<td>' + "%.4f" % dest[i][0] + '</td>')
+                    f.write('<td>' + "%.4f" % dest[i][1] + '</td>')
+                    f.write('<td>' + "%.5f" % Xr[i][0] + '</td>')
+                    f.write('<td>' + "%.5f" % Yr[i][0] + '</td>')
+                    f.write('</tr>')
+                f.write('<table>')
+                f.write('</body></html>')
+                
+            return out_file
+                
+        if output_file:
+            results[self.OUTPUT_HTML_FILE] = createHtmlReport(output_file)
+
         # Return the results of the algorithm.
-        return {'OUTPUT': trans_result['OUTPUT']}
+        return results
