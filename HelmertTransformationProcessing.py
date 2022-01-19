@@ -264,9 +264,9 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         YT = Ys + b * x_strich + a * y_strich
         Xr = XT - dest[:,:1]
         Yr = YT - dest[:,1:2]
-        msg = "Residuals X:\n " + "%.5f" % Xr
+        msg = "Residuals X:\n " + str(Xr)
         feedback.pushInfo(msg)
-        msg = "Residuals Y:\n " + "%.5f" % Yr
+        msg = "Residuals Y:\n " + str(Yr)
         feedback.pushInfo(msg)
 
         # Calculate the scale
@@ -359,14 +359,12 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
                 f.write('<h2>' + self.tr('Residuals') + '</h2>')
                 f.write('<table border="1" width="700px">')
                 f.write('<tr><th>Start X</td><th>Start Y</th><th>Dest X</th><th>Dest Y</th><th>Residuals X</th><th>Residuals Y</th></tr>')
-                for i in range(R.size):
+                for i in range(s.featureCount()):
                     f.write('<tr>')
-                    f.write('<td>' + "%.4f" % source[i][0] + '</td>')
-                    f.write('<td>' + "%.4f" % source[i][1] + '</td>')
-                    f.write('<td>' + "%.4f" % dest[i][0] + '</td>')
-                    f.write('<td>' + "%.4f" % dest[i][1] + '</td>')
-                    f.write('<td>' + "%.5f" % Xr[i][0] + '</td>')
-                    f.write('<td>' + "%.5f" % Yr[i][0] + '</td>')
+                    for c in [ source[i][0], source[i][1], dest[i][0], dest[i][1]]:
+                        f.write("<td>%.4f</td>" % c)
+                    for r in [ Xr[i][0], Yr[i][0]]:
+                        f.write("<td>%.5f</td>" % r)
                     f.write('</tr>')
                 f.write('<table>')
                 f.write('</body></html>')
