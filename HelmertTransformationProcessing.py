@@ -105,7 +105,7 @@ class HelmertTransformationProcessingAlgorithm(QgsProcessingAlgorithm):
         should provide a basic description about what the algorithm does and the
         parameters and outputs associated with it..
         """
-        msg = self.tr("""    This algorithm georeferences vector using a 4-parameter helmert transformation. At least four control points are required. The parameters are estimated using the least square method.
+        msg = self.tr("""This algorithm georeferences vector using a 4-parameter helmert transformation. At least four control points are required. The parameters are estimated using the least square method.
         The reference layer is a (Multi-)LineString layer that connects the control points from the start system with the control points in the destination system. The line direction is always from the start system to the destination system.
         The layer to transform can be of any geometry type.
         The residuals are reported in the log to review the control points used. Large absolute values of residuals indicate gross errors or show that this transformation does not fit the distortions in the start system.""")
