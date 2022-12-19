@@ -163,13 +163,12 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
         feedback.setProgressText(self.tr('Start extraction'))
         
         # Extract the ZIP archive
-        r = QgsZipUtils.unzip(source, dest)
+        (success, fileList) = QgsZipUtils.unzip(source, dest)
         
         # Return the results of the algorithm if the extraction was successful.
         # A list of extracted files and the output folder is returned.
-        if r[0]:
-            return { self.OUTPUT_FOLDER: dest,
-                     self.OUTPUT: r[1] }
-        
-
-        return {}
+        if not success:
+            raise QgsProcessingException(self.tr('Archive extraction failed'))
+            
+        return { self.OUTPUT_FOLDER: dest,
+                 self.OUTPUT: fileList }

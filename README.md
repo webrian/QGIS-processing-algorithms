@@ -4,6 +4,22 @@ A collection of processing algorithms.
 
 ## Unzip Processing Algorithm
 
+### Motivation
+
+There is a handy processing algorithm to download files from an arbitrary URL. But as it seems geodata are often in compressed ZIP archives. In case of ZIP archives it is necessary to extract downloaded data to a destination folder for further processing.
+
+### Installation
+
+1. download the Python scripts
+2. open Processing Toolbox in QGIS
+3. select "Open Existing Script" in the Processing Toolbox menu
+4. select the script UnzipArchiveProcessing.py
+5. algorithm is added in section "Scripts"
+
+### Use in a Model
+
+This algorithm is useful for use in a model after downloading data.
+
 ## Transformation Processing Algorithms
 
 ### Motivation
