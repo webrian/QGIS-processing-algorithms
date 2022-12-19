@@ -2,7 +2,7 @@
 
 """
 ***************************************************************************
-    HelmertTransformationProcessing.py
+    UnzipArchiveProcessing.py
     ----------------------------------
     Date                 : December 2022
     Copyright            : (C) 2022 by Adrian Weber
@@ -18,14 +18,15 @@
 """
 
 from qgis.PyQt.QtCore import (QCoreApplication,
+                              QDir,
                               QFile)
 from qgis.core import (QgsProcessing,
-                       QgsFeatureSink,
-                       QgsZipUtils,
-                       QgsProcessingException,
+                       QgsProcessingOutputString,
                        QgsProcessingAlgorithm,
+                       QgsProcessingException,
                        QgsProcessingParameterFile,
-                       QgsProcessingParameterFolderDestination)
+                       QgsProcessingParameterFolderDestination,
+                       QgsZipUtils)
 from qgis import processing
 
 
@@ -43,6 +44,7 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
     # calling from the QGIS console.
     INPUT = 'INPUT'
     OUTPUT = 'OUTPUT'
+    OUTPUT_FOLDER = 'OUTPUT_FOLDER'
 
     def tr(self, string):
         """
@@ -113,8 +115,14 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
         # The destination folder where the archive is extracted to
         self.addParameter(
             QgsProcessingParameterFolderDestination(
-                self.OUTPUT,
+                self.OUTPUT_FOLDER,
                 self.tr('Output directory')
+            )
+        )
+        
+        self.addOutput(
+            QgsProcessingOutputString(
+                self.OUTPUT
             )
         )
 
@@ -134,7 +142,7 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
         
         dest = self.parameterAsFileOutput(
             parameters,
-            self.OUTPUT,
+            self.OUTPUT_FOLDER,
             context
         )
         
@@ -143,16 +151,25 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
         
         if source is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.INPUT))
-            
+        
+        # Check if the input ZIP archive exists
         if not QFile.exists(source):
             raise QgsProcessingException(self.tr('Input is not a valid ZIP archive'))
         
-        QgsZipUtils.unzip(source, dest)
+        # Check if the output folder exists
+        if not QDir(dest).exists():
+            raise QgsProcessingException(self.tr('Output folder does not exist'))
+        
+        feedback.setProgressText(self.tr('Start extraction'))
+        
+        # Extract the ZIP archive
+        r = QgsZipUtils.unzip(source, dest)
+        
+        # Return the results of the algorithm if the extraction was successful.
+        # A list of extracted files and the output folder is returned.
+        if r[0]:
+            return { self.OUTPUT_FOLDER: dest,
+                     self.OUTPUT: r[1] }
+        
 
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        return {self.OUTPUT: dest}
+        return {}
