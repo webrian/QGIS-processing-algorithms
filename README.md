@@ -1,6 +1,6 @@
 # QGIS Processing Algorithms
 
-A collection of processing algorithms.
+A collection of [QGIS](https://github.com/qgis/QGIS) processing algorithms.
 
 ## Unzip Processing Algorithm
 
