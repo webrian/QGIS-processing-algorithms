@@ -6,7 +6,7 @@ A collection of [QGIS](https://github.com/qgis/QGIS) processing algorithms.
 
 ### Motivation
 
-There is a handy processing algorithm to download files from an arbitrary URL. But as it seems geodata are often in compressed ZIP archives. In case of ZIP archives it is necessary to extract downloaded data to a destination folder for further processing.
+There is a handy processing algorithm to [download files](https://docs.qgis.org/testing/en/docs/user_manual/processing_algs/qgis/filetools.html#download-file) from an arbitrary URL. But as it seems geodata are often in compressed ZIP archives. In case of ZIP archives it is necessary to extract downloaded data to a destination folder for further processing.
 
 ### Installation
 
@@ -16,9 +16,13 @@ There is a handy processing algorithm to download files from an arbitrary URL. B
 4. select the script UnzipArchiveProcessing.py
 5. algorithm is added in section "Scripts"
 
+![Screenshot from 2022-12-19 22-37-09](https://user-images.githubusercontent.com/980073/208528878-895b6463-af99-427a-b969-97c5de25d89e.png)
+
 ### Use in a Model
 
 This algorithm is useful for use in a model after downloading data.
+
+![model](https://user-images.githubusercontent.com/980073/208529120-9adf9aa2-0d84-4a47-a612-41a0d2bff8a0.png)
 
 ## Transformation Processing Algorithms
 
