@@ -27,7 +27,6 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFile,
                        QgsProcessingParameterFolderDestination,
                        QgsZipUtils)
-from qgis import processing
 
 
 class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
