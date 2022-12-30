@@ -20,8 +20,7 @@
 from qgis.PyQt.QtCore import (QCoreApplication,
                               QDir,
                               QFile)
-from qgis.core import (QgsProcessing,
-                       QgsProcessingOutputString,
+from qgis.core import (QgsProcessingOutputString,
                        QgsProcessingAlgorithm,
                        QgsProcessingException,
                        QgsProcessingParameterFile,
@@ -34,7 +33,7 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
     This algorithm unzip a ZIP archive and stores the uncompressed
     files to a specified directory.
 
-    It has been developped to use in combination with the download
+    It has been developed to use in combination with the download
     file processing algorithm.
     """
 
@@ -110,7 +109,7 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
                 extension='zip'
             )
         )
-        
+
         # The destination folder where the archive is extracted to
         self.addParameter(
             QgsProcessingParameterFolderDestination(
@@ -118,7 +117,7 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
                 self.tr('Output directory')
             )
         )
-        
+
         self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT
@@ -138,36 +137,36 @@ class UnzipArchiveProcessingAlgorithm(QgsProcessingAlgorithm):
             self.INPUT,
             context
         )
-        
-        dest = self.parameterAsFileOutput(
+
+        dest: str = self.parameterAsFileOutput(
             parameters,
             self.OUTPUT_FOLDER,
             context
         )
-        
+
         if feedback.isCanceled():
             return {}
-        
+
         if source is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.INPUT))
-        
+
         # Check if the input ZIP archive exists
         if not QFile.exists(source):
             raise QgsProcessingException(self.tr('Input is not a valid ZIP archive'))
-        
+
         # Check if the output folder exists
         if not QDir(dest).exists():
             raise QgsProcessingException(self.tr('Output folder does not exist'))
-        
+
         feedback.setProgressText(self.tr('Start extraction'))
-        
+
         # Extract the ZIP archive
         (success, fileList) = QgsZipUtils.unzip(source, dest)
-        
+
         # Return the results of the algorithm if the extraction was successful.
         # A list of extracted files and the output folder is returned.
         if not success:
             raise QgsProcessingException(self.tr('Archive extraction failed'))
-            
-        return { self.OUTPUT_FOLDER: dest,
-                 self.OUTPUT: fileList }
+
+        return {self.OUTPUT_FOLDER: dest,
+                self.OUTPUT: fileList}
