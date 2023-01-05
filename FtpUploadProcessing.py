@@ -109,8 +109,7 @@ class FtpUploadProcessingAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
+        # The input file source. It can be any kind of file type.
         self.addParameter(
             QgsProcessingParameterFile(
                 self.INPUT,
@@ -118,8 +117,7 @@ class FtpUploadProcessingAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
+        # The server URL in the form ftp://ftp.yourdomain.com/
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_HOST,
@@ -128,19 +126,19 @@ class FtpUploadProcessingAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
+        # The FTP port
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.FTP_PORT,
                 self.tr('FTP Port'),
                 type=QgsProcessingParameterNumber.Integer,
-                defaultValue=21
+                defaultValue=21,
+                minValue=0,
+                maxValue=65536
             )
         )
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
+        # The FTP username
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_USER,
@@ -148,8 +146,7 @@ class FtpUploadProcessingAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
-        # We add the input vector features source. It can have any kind of
-        # geometry.
+        # The FTP password
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_PASSWORD,
@@ -220,6 +217,9 @@ class FtpUploadProcessingAlgorithm(QgsProcessingAlgorithm):
         self.url.setUserName(ftpuser)
         self.url.setPassword(ftppassword)
         self.url.setPath(QFileInfo(file).fileName())
+        
+        if feedback.isCanceled():
+            return {}
 
         # Try to open the file in read-only mode
         if file.open(QIODevice.ReadOnly):
