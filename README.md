@@ -24,6 +24,14 @@ This algorithm is useful for use in a model after downloading data.
 
 ![model](https://user-images.githubusercontent.com/980073/208529120-9adf9aa2-0d84-4a47-a612-41a0d2bff8a0.png)
 
+## FTP Upload Processing Algorithm
+
+### Motivation
+
+### Installation
+
+### Use in a Model
+
 ## Transformation Processing Algorithms
 
 ### Motivation
