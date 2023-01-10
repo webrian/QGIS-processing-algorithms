@@ -28,9 +28,21 @@ This algorithm is useful for use in a model after downloading data.
 
 ### Motivation
 
+QGIS features already a [Download File](https://docs.qgis.org/testing/en/docs/user_manual/processing_algs/qgis/filetools.html#download-file) processing tool to download (geo-)data from a server. But there is a missing tool to upload files to a server.
+
 ### Installation
 
+1. download the Python scripts
+2. open Processing Toolbox in QGIS
+3. select "Open Existing Script" in the Processing Toolbox menu
+4. select the script FtpUploadProcessing.py
+5. algorithm is added in section "Scripts"
+
+![image](https://user-images.githubusercontent.com/980073/211674361-f41e64f4-4cba-4dc2-9d53-7554b6234b53.png)
+
 ### Use in a Model
+
+![image](https://user-images.githubusercontent.com/980073/211674637-cb2f6c66-8b7b-461a-972a-10b56bac7b29.png)
 
 ## Transformation Processing Algorithms
 
