@@ -10,7 +10,7 @@ There is a handy processing algorithm to [download files](https://docs.qgis.org/
 
 ### Installation
 
-1. download the Python scripts
+1. download the Python script
 2. open Processing Toolbox in QGIS
 3. select "Open Existing Script" in the Processing Toolbox menu
 4. select the script UnzipArchiveProcessing.py
@@ -32,7 +32,7 @@ QGIS features already a [Download File](https://docs.qgis.org/testing/en/docs/us
 
 ### Installation
 
-1. download the Python scripts
+1. download the Python script
 2. open Processing Toolbox in QGIS
 3. select "Open Existing Script" in the Processing Toolbox menu
 4. select the script FtpUploadProcessing.py
@@ -48,12 +48,12 @@ QGIS features already a [Download File](https://docs.qgis.org/testing/en/docs/us
 
 ### Motivation
 
-While [QGIS](https://github.com/qgis/QGIS) features an user-friendly and sophisticated [georeferencer](https://docs.qgis.org/testing/en/docs/user_manual/working_with_raster/georeferencer.html) for raster files with different transformation options, it lacks a similar tool for vector layers. The GDAL/OGR library provides the gcp options to georeference vector layers with polynominal transformations.
+~~While [QGIS](https://github.com/qgis/QGIS) features an user-friendly and sophisticated [georeferencer](https://docs.qgis.org/testing/en/docs/user_manual/working_with_raster/georeferencer.html) for raster files with different transformation options, it lacks a similar tool for vector layers.~~ QGIS features a native vector georeferencer since version 3.26. The GDAL/OGR library provides the gcp options to georeference vector layers with polynominal transformations.
 But there is still an option missing to reference data with a 4-parameter Helmert transformation with estimated parameters using the least square fitting. This QGIS processing script should fill this gap.
 
 ### Installation
 
-1. download the Python scripts
+1. download the Python script
 2. open Processing Toolbox in QGIS
 3. select "Open Existing Script" in the Processing Toolbox menu
 4. select the scripts HelmertTransformationProcessing.py and/or PolynominalTransformationProcessing.py
