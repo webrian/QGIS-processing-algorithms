@@ -11,15 +11,19 @@
 
 import os
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
+from qgis.core import (QgsDataSourceUri,
+                       QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
+                       QgsProcessingOutputBoolean,
                        QgsProcessingParameterString,
                        QgsProcessingParameterProviderConnection,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterFeatureSink,
-                       QgsSettings)
+                       QgsProviderConnectionException,
+                       QgsProviderRegistry
+                       )
 from qgis import processing
 from QgisModelBaker.libs.modelbaker.iliwrapper import iliexporter
 from QgisModelBaker.libs.modelbaker.iliwrapper.globals import DbIliMode
@@ -40,7 +44,7 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
     DBSCHEMA = 'DBSCHEMA'
     ILIMODELS = 'ILIMODELS'
     XTFFILE = 'XTFFILE'
-    VALID = 'VALID'
+    ISVALID = 'ISVALID'
 
     def tr(self, string):
         """
@@ -130,6 +134,13 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
+        self.addOutput(
+            QgsProcessingOutputBoolean(
+                self.ISVALID,
+                self.tr("is valid")
+            )
+        )
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
@@ -160,42 +171,45 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
             context
         )
 
-        s = QgsSettings()
+        # resolve connection details to uri
+        try:
+            md = QgsProviderRegistry.instance().providerMetadata('postgres')
+            conn = md.createConnection(dbConnection)
+        except QgsProviderConnectionException:
+            raise QgsProcessingException(self.tr('Could not retrieve connection details for {}').format(dbConnection))
+        uri = QgsDataSourceUri(conn.uri())
+
         config = ExportConfiguration()
-        config.dbhost = s.value("/PostgreSQL/connections/%s/host" % dbConnection)
-        config.dbport = s.value("/PostgreSQL/connections/%s/port" % dbConnection)
-        config.dbusr = s.value("/PostgreSQL/connections/%s/username" % dbConnection)
-        config.dbpwd = s.value("/PostgreSQL/connections/%s/password" % dbConnection)
-        config.database = s.value("/PostgreSQL/connections/%s/database" % dbConnection)
+        config.dbhost = uri.host()
+        config.dbport = uri.port()
+        config.dbusr = uri.username()
+        config.dbpwd = uri.password()
+        config.database = uri.database()
         config.dbschema = dbSchema
         config.ilimodels = iliModels
         config.xtffile = xtfFile
         feedback.pushInfo(os.path.splitext(xtfFile)[0])
         config.logfile_path = "%s.log" % os.path.splitext(xtfFile)[0]
+
+        if feedback.isCanceled():
+            return {}
         
         exporter = iliexporter.Exporter()
         exporter.tool = DbIliMode.ili2pg
         exporter.configuration = config
 
-        def _exporter_stdout(txt):
-            feedback.pushInfo(txt)        
-
         def _exporter_stderr(txt):
             feedback.pushInfo(txt)
-            
-        def _proc_finished(exitCode, c):
-            if exitCode == iliexporter.Exporter.SUCCESS:
-                feedback.pushInfo("...export done")
-                return {'VALID': True}
-            else:
-                # How to properly cancel a processing algorithm?
-                feedback.reportError("...export failed")
-                return {}
   
-        exporter.stdout.connect(_exporter_stdout)
+        #exporter.stdout.connect(_exporter_stdout)
         exporter.stderr.connect(_exporter_stderr)
-        exporter.process_finished.connect(_proc_finished)
+        #exporter.process_finished.connect(_proc_finished)
+
+        if feedback.isCanceled():
+            return {}
 
         res = exporter.run(None)
+        if res != iliexporter.Exporter.SUCCESS:
+            raise QgsProcessingException(self.tr("...export failed"))
 
-        return {}
+        return { self.ISVALID: True }
