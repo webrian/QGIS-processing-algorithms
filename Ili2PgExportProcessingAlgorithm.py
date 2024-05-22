@@ -212,4 +212,5 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
         if res != iliexporter.Exporter.SUCCESS:
             raise QgsProcessingException(self.tr("...export failed"))
 
-        return { self.ISVALID: True }
+        return { self.ISVALID: True,
+        	 self.XTFFILE: xtfFile }
