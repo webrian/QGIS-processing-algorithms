@@ -10,15 +10,19 @@
 """
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
+from qgis.core import (QgsDataSourceUri,
+                       QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
+                       QgsProcessingOutputBoolean,
                        QgsProcessingParameterString,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterProviderConnection,
                        QgsProcessingParameterFeatureSink,
-                       QgsSettings)
+                       QgsProviderConnectionException,
+                       QgsProviderRegistry
+                       )
 from qgis import processing
 from QgisModelBaker.libs.modelbaker.iliwrapper import ilivalidator
 from QgisModelBaker.libs.modelbaker.iliwrapper.globals import DbIliMode
@@ -46,7 +50,7 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
     INPUT = 'INPUT'
     DBSCHEMA = 'DBSCHEMA'
     ILIMODELS = 'ILIMODELS'
-    VALID = 'VALID'
+    ISVALID = 'ISVALID'
 
     def tr(self, string):
         """
@@ -128,6 +132,13 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
                 self.tr('INTERLIS models')
             )
         )
+
+        self.addOutput(
+            QgsProcessingOutputBoolean(
+                self.ISVALID,
+                self.tr("is valid")
+            )
+        )
  
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -152,40 +163,43 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
             self.ILIMODELS,
             context
         )
+        
+        # resolve connection details to uri
+        try:
+            md = QgsProviderRegistry.instance().providerMetadata('postgres')
+            conn = md.createConnection(dbConnection)
+        except QgsProviderConnectionException:
+            raise QgsProcessingException(self.tr('Could not retrieve connection details for {}').format(dbConnection))
+        uri = QgsDataSourceUri(conn.uri())
 
-        s = QgsSettings()
         config = ValidateConfiguration()
-        config.dbhost = s.value("/PostgreSQL/connections/%s/host" % dbConnection)
-        config.dbport = s.value("/PostgreSQL/connections/%s/port" % dbConnection)
-        config.dbusr = s.value("/PostgreSQL/connections/%s/username" % dbConnection)
-        config.dbpwd = s.value("/PostgreSQL/connections/%s/password" % dbConnection)
-        config.database = s.value("/PostgreSQL/connections/%s/database" % dbConnection)
+        config.dbhost = uri.host()
+        config.dbport = uri.port()
+        config.dbusr = uri.username()
+        config.dbpwd = uri.password()
+        config.database = uri.database()
         config.dbschema = dbSchema
         config.ilimodels = iliModels
+
+        if feedback.isCanceled():
+            return {}
         
         validator = ilivalidator.Validator()
         validator.tool = DbIliMode.ili2pg
         validator.configuration = config
         
-        def _validator_stdout(txt):
-            feedback.pushInfo(txt)
-
         def _validator_stderr(txt):
             feedback.pushInfo(txt)
             
-        def _proc_finished(exitCode, c):
-            if exitCode == ilivalidator.Validator.SUCCESS:
-                feedback.pushInfo("...validate done")
-                return False
-            else:
-                # How to properly cancel a processing algorithm?
-                feedback.reportError("...validate failed")
-                return {self.VALID: False}
-  
-        validator.stdout.connect(_validator_stdout)
+        #validator.stdout.connect(_validator_stdout)
         validator.stderr.connect(_validator_stderr)
-        validator.process_finished.connect(_proc_finished)
+        #validator.process_finished.connect(_proc_finished)
+
+        if feedback.isCanceled():
+            return {}
 
         res = validator.run(None)
+        if res != ilivalidator.Validator.SUCCESS:
+            raise QgsProcessingException(self.tr("...validate failed"))
 
-        return {}
+        return { self.ISVALID: True }
