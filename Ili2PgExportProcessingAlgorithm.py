@@ -40,8 +40,8 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    INPUT = 'INPUT'
-    DBSCHEMA = 'DBSCHEMA'
+    DATABASE = 'DATABASE'
+    SCHEMA = 'SCHEMA'
     ILIMODELS = 'ILIMODELS'
     XTFFILE = 'XTFFILE'
     ISVALID = 'ISVALID'
@@ -107,7 +107,7 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
         # geometry.
         self.addParameter(
             QgsProcessingParameterProviderConnection(
-                self.INPUT,
+                self.DATABASE,
                 self.tr('Database connection'),
                 'postgres'
             )
@@ -115,7 +115,7 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterString(
-                self.DBSCHEMA,
+                self.SCHEMA,
                 self.tr('Database schema')
             )
         )
@@ -149,13 +149,13 @@ class Ili2PgExportProcessingAlgorithm(QgsProcessingAlgorithm):
         # Retrieve the database connection
         dbConnection = self.parameterAsConnectionName(
             parameters,
-            self.INPUT,
+            self.DATABASE,
             context
         )
         
         dbSchema = self.parameterAsString(
            parameters,
-            self.DBSCHEMA,
+            self.SCHEMA,
             context
         )
         

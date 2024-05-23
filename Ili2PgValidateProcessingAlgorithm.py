@@ -47,8 +47,8 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    INPUT = 'INPUT'
-    DBSCHEMA = 'DBSCHEMA'
+    DATABASE = 'DATABASE'
+    SCHEMA = 'SCHEMA'
     ILIMODELS = 'ILIMODELS'
     ISVALID = 'ISVALID'
 
@@ -113,7 +113,7 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
         # geometry.
         self.addParameter(
             QgsProcessingParameterProviderConnection(
-                self.INPUT,
+                self.DATABASE,
                 self.tr('Database connection'),
                 'postgres'
             )
@@ -121,7 +121,7 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterString(
-                self.DBSCHEMA,
+                self.SCHEMA,
                 self.tr('Database schema')
             )
         )
@@ -148,13 +148,13 @@ class Ili2PgValidateProcessingAlgorithm(QgsProcessingAlgorithm):
         # Retrieve the database connection
         dbConnection = self.parameterAsConnectionName(
             parameters,
-            self.INPUT,
+            self.DATABASE,
             context
         )
         
         dbSchema = self.parameterAsString(
            parameters,
-            self.DBSCHEMA,
+            self.SCHEMA,
             context
         )
         
